@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} | Bloxy{% endblock %}
+
+{% block content %}
+<article class="card shadow-sm">
+  <div class="card-body p-4">
+    <h1 class="h2">{{ post.title }}</h1>
+    <p class="text-muted small mb-4">By {{ post.author.username }} on {{ post.created_at.strftime('%b %d, %Y at %H:%M UTC') }}</p>
+    <div class="post-body">{{ post.body|e|replace('\n', '<br>')|safe }}</div>
+
+    <div class="mt-4 d-flex align-items-center gap-2">
+      <span class="badge text-bg-light border">{{ post.likes|length }} likes</span>
+      <span class="badge text-bg-light border">{{ post.comments|length }} comments</span>
+      {% if current_user.is_authenticated and current_user.can_comment_like %}
+      <form method="post" action="{{ url_for('blog.post_like', post_id=post.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-outline-primary">
+          {% if liked_by_current_user %}Unlike{% else %}Like{% endif %}
+        </button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if current_user.is_authenticated and (current_user.id == post.author_id or current_user.is_admin) %}
+      <div class="mt-4 d-flex gap-2">
+        <a href="{{ url_for('blog.post_edit', post_id=post.id) }}" class="btn btn-outline-secondary">Edit</a>
+        <form action="{{ url_for('blog.post_delete', post_id=post.id) }}" method="post" onsubmit="return confirm('Delete this post?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</article>
+
+<section class="card shadow-sm mt-4">
+  <div class="card-body p-4">
+    <h2 class="h5 mb-3">Comments</h2>
+
+    {% if current_user.is_authenticated and current_user.can_comment_like %}
+      <form method="post" action="{{ url_for('blog.post_comment', post_id=post.id) }}" class="mb-4">
+        {{ comment_form.hidden_tag() }}
+        <div class="mb-2">
+          {{ comment_form.body(class="form-control", rows="3", placeholder="Write a comment...") }}
+          {% for error in comment_form.body.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        {{ comment_form.submit(class="btn btn-primary btn-sm") }}
+      </form>
+    {% elif current_user.is_authenticated %}
+      <p class="text-muted small">Your role cannot comment or like posts.</p>
+    {% else %}
+      <p class="text-muted small mb-3">Log in as a user account to add comments and likes.</p>
+    {% endif %}
+
+    {% if post.comments %}
+      <div class="d-flex flex-column gap-3">
+        {% for comment in post.comments|sort(attribute='created_at', reverse=true) %}
+          <article class="border rounded p-3 bg-light-subtle">
+            <div class="small text-muted mb-2">
+              {{ comment.author.username }} · {{ comment.created_at.strftime('%b %d, %Y %H:%M UTC') }}
+            </div>
+            <div>{{ comment.body|e|replace('\n', '<br>')|safe }}</div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No comments yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
