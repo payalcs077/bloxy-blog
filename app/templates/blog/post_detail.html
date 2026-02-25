@@ -33,7 +33,7 @@
   </div>
 </article>
 
-<section class="card shadow-sm mt-4">
+<section class="card shadow-sm mt-4 comments-wrap">
   <div class="card-body p-4">
     <h2 class="h5 mb-3">Comments</h2>
 
@@ -49,17 +49,18 @@
     {% elif current_user.is_authenticated %}
       <p class="text-muted small">Your role cannot comment or like posts.</p>
     {% else %}
-      <p class="text-muted small mb-3">Log in as a user account to add comments and likes.</p>
+      <p class="text-muted small mb-3">Log in to add comments and likes.</p>
     {% endif %}
 
     {% if post.comments %}
       <div class="d-flex flex-column gap-3">
         {% for comment in post.comments|sort(attribute='created_at', reverse=true) %}
-          <article class="border rounded p-3 bg-light-subtle">
-            <div class="small text-muted mb-2">
-              {{ comment.author.username }} · {{ comment.created_at.strftime('%b %d, %Y %H:%M UTC') }}
+          <article class="comment-item">
+            <div class="comment-head">
+              <span class="comment-user">{{ comment.author.username }}</span>
+              <span class="comment-time">{{ comment.created_at.strftime('%b %d, %Y %H:%M UTC') }}</span>
             </div>
-            <div>{{ comment.body|e|replace('\n', '<br>')|safe }}</div>
+            <div class="comment-body">{{ comment.body|e|replace('\n', '<br>')|safe }}</div>
           </article>
         {% endfor %}
       </div>

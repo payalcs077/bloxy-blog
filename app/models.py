@@ -43,7 +43,7 @@ class User(UserMixin, db.Model):
 
     @property
     def can_comment_like(self) -> bool:
-        return self.role in (ROLE_USER, ROLE_ADMIN)
+        return self.role in (ROLE_USER, ROLE_AUTHOR, ROLE_ADMIN)
 
 
 @login_manager.user_loader

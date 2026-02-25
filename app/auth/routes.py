@@ -1,12 +1,11 @@
-import hmac
 import re
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from ..extensions import db, oauth
 from ..forms import LoginForm, RegistrationForm
-from ..models import ROLE_ADMIN, ROLE_USER, ROLE_VALUES, User
+from ..models import ROLE_AUTHOR, ROLE_USER, User
 
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -20,19 +19,9 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         selected_role = form.role.data
-        if selected_role not in ROLE_VALUES:
+        if selected_role not in (ROLE_USER, ROLE_AUTHOR):
             flash("Invalid role selected.", "danger")
             return render_template("auth/register.html", form=form)
-
-        if selected_role == ROLE_ADMIN:
-            expected_admin_token = (current_app.config.get("ADMIN_REGISTRATION_TOKEN", "") or "").strip()
-            provided_admin_token = (form.admin_token.data or "").strip()
-            if not expected_admin_token:
-                flash("Admin registration is disabled on this server.", "danger")
-                return render_template("auth/register.html", form=form)
-            if not hmac.compare_digest(provided_admin_token, expected_admin_token):
-                flash("Invalid admin registration token.", "danger")
-                return render_template("auth/register.html", form=form)
 
         existing = User.query.filter(
             (User.email == form.email.data.lower()) | (User.username == form.username.data)
@@ -88,54 +77,44 @@ def logout():
     return redirect(url_for("blog.index"))
 
 
-@bp.route("/login/github")
-def login_github():
-    github = oauth.create_client("github")
-    if github is None:
-        flash("GitHub OAuth is not configured on this server.", "warning")
+@bp.route("/login/google")
+def login_google():
+    google = oauth.create_client("google")
+    if google is None:
+        flash("Google OAuth is not configured on this server.", "warning")
         return redirect(url_for("auth.login"))
 
-    redirect_uri = url_for("auth.github_authorize", _external=True)
-    return github.authorize_redirect(redirect_uri)
+    redirect_uri = url_for("auth.google_authorize", _external=True)
+    return google.authorize_redirect(redirect_uri, prompt="select_account")
 
 
-@bp.route("/authorize/github")
-def github_authorize():
-    github = oauth.create_client("github")
-    if github is None:
-        flash("GitHub OAuth is not configured on this server.", "warning")
+@bp.route("/authorize/google")
+def google_authorize():
+    google = oauth.create_client("google")
+    if google is None:
+        flash("Google OAuth is not configured on this server.", "warning")
         return redirect(url_for("auth.login"))
 
     try:
-        github.authorize_access_token()
+        token = google.authorize_access_token()
     except Exception:
-        flash("GitHub authorization failed. Please try again.", "danger")
+        flash("Google authorization failed. Please try again.", "danger")
         return redirect(url_for("auth.login"))
 
-    profile_response = github.get("user")
-    profile = profile_response.json() if profile_response.ok else {}
+    userinfo = token.get("userinfo") or {}
+    if not userinfo:
+        userinfo_response = google.get("userinfo")
+        userinfo = userinfo_response.json() if userinfo_response.ok else {}
 
-    github_id = profile.get("id")
-    if github_id is None:
-        flash("GitHub login failed. Missing account identifier.", "danger")
+    google_sub = userinfo.get("sub")
+    if google_sub is None:
+        flash("Google login failed. Missing account identifier.", "danger")
         return redirect(url_for("auth.login"))
 
-    email = profile.get("email")
-    if not email:
-        emails_response = github.get("user/emails")
-        if emails_response.ok:
-            emails = emails_response.json()
-            primary_verified = next(
-                (entry["email"] for entry in emails if entry.get("primary") and entry.get("verified")),
-                None,
-            )
-            any_verified = next((entry["email"] for entry in emails if entry.get("verified")), None)
-            email = primary_verified or any_verified
+    email = (userinfo.get("email") or f"google_{google_sub}@users.noreply.local").lower()
+    oauth_sub = str(google_sub)
 
-    email = (email or f"github_{github_id}@users.noreply.github.com").lower()
-    oauth_sub = str(github_id)
-
-    user = User.query.filter_by(oauth_provider="github", oauth_sub=oauth_sub).first()
+    user = User.query.filter_by(oauth_provider="google", oauth_sub=oauth_sub).first()
 
     if user is None:
         existing_email_user = User.query.filter_by(email=email).first()
@@ -146,15 +125,20 @@ def github_authorize():
             return redirect(url_for("auth.login"))
 
         if existing_email_user:
-            existing_email_user.oauth_provider = "github"
+            existing_email_user.oauth_provider = "google"
             existing_email_user.oauth_sub = oauth_sub
             user = existing_email_user
         else:
-            base_username = profile.get("login") or f"github_{github_id}"
+            base_username = (
+                userinfo.get("name")
+                or userinfo.get("given_name")
+                or (userinfo.get("email") or "").split("@")[0]
+                or f"google_{google_sub}"
+            )
             user = User(
                 username=_unique_username(base_username),
                 email=email,
-                oauth_provider="github",
+                oauth_provider="google",
                 oauth_sub=oauth_sub,
                 role=ROLE_USER,
             )
@@ -163,7 +147,7 @@ def github_authorize():
         db.session.commit()
 
     login_user(user)
-    flash("Signed in with GitHub.", "success")
+    flash("Signed in with Google.", "success")
     return redirect(url_for("blog.index"))
 
 

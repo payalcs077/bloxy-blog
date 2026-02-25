@@ -1,5 +1,6 @@
 import os
 
+import click
 from flask import Flask
 
 from config import Config
@@ -21,15 +22,13 @@ def create_app(config_class=Config):
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "warning"
 
-    if app.config.get("GITHUB_CLIENT_ID") and app.config.get("GITHUB_CLIENT_SECRET"):
+    if app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET"):
         oauth.register(
-            name="github",
-            client_id=app.config["GITHUB_CLIENT_ID"],
-            client_secret=app.config["GITHUB_CLIENT_SECRET"],
-            access_token_url="https://github.com/login/oauth/access_token",
-            authorize_url="https://github.com/login/oauth/authorize",
-            api_base_url="https://api.github.com/",
-            client_kwargs={"scope": "read:user user:email"},
+            name="google",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
         )
 
     from .auth.routes import bp as auth_bp
@@ -50,6 +49,19 @@ def create_app(config_class=Config):
         db.drop_all()
         db.create_all()
         print("Database reset.")
+
+    @app.cli.command("promote-admin")
+    @click.option("--email", required=True, help="Email for an existing account")
+    def promote_admin_command(email: str):
+        from .models import ROLE_ADMIN, User
+
+        user = User.query.filter_by(email=email.lower()).first()
+        if user is None:
+            raise click.ClickException(f"User not found for email: {email}")
+
+        user.role = ROLE_ADMIN
+        db.session.commit()
+        click.echo(f"User '{user.username}' promoted to admin.")
 
     @app.context_processor
     def inject_now():

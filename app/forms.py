@@ -1,8 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, Regexp
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp
 
-from .models import ROLE_ADMIN, ROLE_AUTHOR, ROLE_USER
+from .models import ROLE_AUTHOR, ROLE_USER
 
 
 class RegistrationForm(FlaskForm):
@@ -25,12 +25,10 @@ class RegistrationForm(FlaskForm):
         validators=[DataRequired()],
         choices=[
             (ROLE_USER, "User (like/comment only)"),
-            (ROLE_AUTHOR, "Author (write posts)"),
-            (ROLE_ADMIN, "Admin (full control)"),
+            (ROLE_AUTHOR, "Author (write posts + like/comment)"),
         ],
         default=ROLE_USER,
     )
-    admin_token = PasswordField("Admin Registration Token", validators=[Optional(), Length(max=255)])
     submit = SubmitField("Create Account")
 
 

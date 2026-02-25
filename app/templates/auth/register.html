@@ -38,13 +38,7 @@
             {{ form.role.label(class="form-label") }}
             {{ form.role(class="form-select") }}
             {% for error in form.role.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-            <div class="form-text">User can like/comment, Author can publish posts, Admin can manage users and all posts.</div>
-          </div>
-
-          <div class="mb-3">
-            {{ form.admin_token.label(class="form-label") }}
-            {{ form.admin_token(class="form-control", placeholder="Required only for admin role") }}
-            {% for error in form.admin_token.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            <div class="form-text">User and Author can like/comment. Authors can also publish posts.</div>
           </div>
 
           <div class="d-grid">{{ form.submit(class="btn btn-primary") }}</div>

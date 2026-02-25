@@ -91,7 +91,7 @@ def post_delete(post_id: int):
 def post_comment(post_id: int):
     post = Post.query.get_or_404(post_id)
     if not current_user.can_comment_like:
-        flash("Only users can like and comment on posts.", "warning")
+        flash("Your account does not have permission to like or comment.", "warning")
         return redirect(url_for("blog.post_detail", post_id=post.id))
 
     form = CommentForm()
@@ -111,7 +111,7 @@ def post_comment(post_id: int):
 def post_like(post_id: int):
     post = Post.query.get_or_404(post_id)
     if not current_user.can_comment_like:
-        flash("Only users can like and comment on posts.", "warning")
+        flash("Your account does not have permission to like or comment.", "warning")
         return redirect(url_for("blog.post_detail", post_id=post.id))
 
     like = Like.query.filter_by(user_id=current_user.id, post_id=post.id).first()

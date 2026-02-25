@@ -230,6 +230,37 @@ a:hover {
   white-space: normal;
 }
 
+.comments-wrap .comment-item {
+  border: 1px solid rgba(247, 170, 255, 0.35);
+  border-radius: 0.8rem;
+  background: linear-gradient(135deg, rgba(47, 16, 66, 0.85), rgba(80, 24, 103, 0.62));
+  padding: 0.95rem 1rem;
+}
+
+.comments-wrap .comment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-bottom: 0.45rem;
+}
+
+.comments-wrap .comment-user {
+  color: #ffe6ff;
+  font-weight: 700;
+}
+
+.comments-wrap .comment-time {
+  color: #ddbfe9;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.comments-wrap .comment-body {
+  color: #f8eeff;
+  line-height: 1.65;
+}
+
 .badge.text-bg-light {
   background: rgba(64, 22, 86, 0.62) !important;
   border-color: rgba(240, 170, 255, 0.38) !important;
