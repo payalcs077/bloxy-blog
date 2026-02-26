@@ -48,38 +48,48 @@ AUTO_CREATE_DB=true
 TRUST_PROXY_HEADERS=true
 ```
 
-## Deploy (Recommended: Render)
+## Deploy (Recommended: Railway)
 
-This project already includes:
+This project includes a Railway config file:
 
-- `Procfile`
-- `render.yaml`
-- Gunicorn start command
+- `railway.toml`
 
 ### Steps
 
 1. Push this repo to GitHub.
-2. In Render, create a **Web Service** from the GitHub repo.
-3. Render auto-detects `render.yaml`. Keep build/start commands from that file.
-4. Add environment variables in Render:
-   - `SECRET_KEY` (Render can auto-generate)
+2. In Railway, click **New Project** -> **Deploy from GitHub repo**.
+3. Select this repository (`payalcs077/bloxy-blog`).
+4. Railway will read `railway.toml` and use the configured Gunicorn start command.
+5. In service variables, add:
+   - `SECRET_KEY`
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
-5. Deploy.
+   - `AUTO_CREATE_DB=true`
+   - `TRUST_PROXY_HEADERS=true`
+6. Go to **Settings -> Networking** and click **Generate Domain**.
 
 App URL will look like:
 
-`https://your-service-name.onrender.com`
+`https://<service-name>.up.railway.app`
 
 ### Google OAuth callback for deployed app
 
 In Google Cloud Console OAuth client, add:
 
-`https://your-service-name.onrender.com/auth/authorize/google`
+`https://<service-name>.up.railway.app/auth/authorize/google`
 
 Keep local callback too:
 
 `http://127.0.0.1:5000/auth/authorize/google`
+
+## Deploy (Alternative: Render)
+
+If needed, this repo also has:
+
+- `render.yaml`
+- `Procfile`
+
+Use the same env vars and callback pattern with your Render domain.
 
 ## Admin Workflow (Safer)
 
@@ -97,4 +107,4 @@ After that, admin can promote/restrict users from `/admin/users`.
 
 - SQLite is fine for college demos.
 - On free hosting, SQLite storage may reset on redeploy/restart.
-- For persistent production data, use managed Postgres.
+- For persistent data, switch to managed Postgres.
