@@ -2,6 +2,7 @@ import os
 
 import click
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 
@@ -13,6 +14,9 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     os.makedirs(app.instance_path, exist_ok=True)
+
+    if app.config.get("TRUST_PROXY_HEADERS", False):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -38,6 +42,14 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(blog_bp)
     app.register_blueprint(admin_bp)
+
+    if app.config.get("AUTO_CREATE_DB", False):
+        with app.app_context():
+            db.create_all()
+
+    @app.get("/healthz")
+    def healthz():
+        return {"status": "ok"}, 200
 
     @app.cli.command("init-db")
     def init_db_command():

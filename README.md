@@ -1,8 +1,8 @@
 # Bloxy Project
 
-Bloxy is a Flask blogging platform with role-based access, Google OAuth login, SQLite storage, and a custom cosmic-themed UI.
+Bloxy is a Flask blogging platform with role-based access, Google OAuth login, SQLite storage, and a cosmic purple/pink theme.
 
-## Tech Stack
+## Stack
 
 - Flask
 - Flask-Login
@@ -10,132 +10,91 @@ Bloxy is a Flask blogging platform with role-based access, Google OAuth login, S
 - Flask-SQLAlchemy (SQLite)
 - Authlib (Google OAuth)
 - Bootstrap 5
+- Gunicorn (deployment server)
 
-## Current Features
+## Features
 
-- Email/password registration and login
+- Email/password registration + login
 - Google OAuth login
-- Role-based access:
-  - `user`: like/comment on posts
-  - `author`: create/edit/delete own posts + like/comment
-  - `admin`: manage users/roles + delete any post
-- Post CRUD for authors/admins
-- Likes and comments on posts
-- Admin dashboard for user and post moderation
-- CSRF protection on forms
-- Cosmic purple/pink theme UI
+- Roles:
+  - `user`: like + comment
+  - `author`: write/edit own posts + like/comment
+  - `admin`: manage roles/users + delete any post
+- Admin dashboards (`/admin/users`, `/admin/posts`)
+- CSRF protection
+- Health endpoint: `/healthz`
 
-## Project Structure
-
-```text
-.
-├── app/
-│   ├── admin/
-│   │   └── routes.py
-│   ├── auth/
-│   │   └── routes.py
-│   ├── blog/
-│   │   └── routes.py
-│   ├── static/
-│   │   ├── images/
-│   │   └── style.css
-│   ├── templates/
-│   │   ├── admin/
-│   │   ├── auth/
-│   │   ├── blog/
-│   │   └── base.html
-│   ├── extensions.py
-│   ├── forms.py
-│   └── models.py
-├── config.py
-├── requirements.txt
-├── run.py
-└── instance/
-```
-
-## Local Setup
-
-1. Create and activate virtual environment:
+## Local Run
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-```
-
-2. Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-3. Create env file:
-
-```bash
 cp .env.example .env
-```
-
-4. Initialize database:
-
-```bash
 flask --app run.py init-db
-```
-
-5. Run app:
-
-```bash
 python run.py
 ```
 
-6. Open:
-
-- [http://127.0.0.1:5000](http://127.0.0.1:5000)
+Open: `http://127.0.0.1:5000`
 
 ## Environment Variables
-
-Set in `.env`:
 
 ```env
 SECRET_KEY=replace-with-a-strong-secret
 DATABASE_URL=sqlite:///instance/blog.db
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
+AUTO_CREATE_DB=true
+TRUST_PROXY_HEADERS=true
 ```
 
-## Google OAuth Setup
+## Deploy (Recommended: Render)
 
-1. Create OAuth credentials in Google Cloud Console.
-2. Create OAuth Client ID for Web application.
-3. Add this redirect URI:
+This project already includes:
 
-```text
-http://127.0.0.1:5000/auth/authorize/google
-```
+- `Procfile`
+- `render.yaml`
+- Gunicorn start command
 
-4. Put credentials in `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
-5. Restart app.
+### Steps
+
+1. Push this repo to GitHub.
+2. In Render, create a **Web Service** from the GitHub repo.
+3. Render auto-detects `render.yaml`. Keep build/start commands from that file.
+4. Add environment variables in Render:
+   - `SECRET_KEY` (Render can auto-generate)
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+5. Deploy.
+
+App URL will look like:
+
+`https://your-service-name.onrender.com`
+
+### Google OAuth callback for deployed app
+
+In Google Cloud Console OAuth client, add:
+
+`https://your-service-name.onrender.com/auth/authorize/google`
+
+Keep local callback too:
+
+`http://127.0.0.1:5000/auth/authorize/google`
 
 ## Admin Workflow (Safer)
 
-Public registration does not create admins directly.
+Public signup only creates `user` or `author`.
 
-- Users can sign up as `user` or `author`
-- Existing admin can promote users in `/admin/users`
-- First admin bootstrap via CLI:
+First admin bootstrap:
 
 ```bash
 flask --app run.py promote-admin --email your-email@example.com
 ```
 
-## Useful Commands
-
-```bash
-flask --app run.py init-db
-flask --app run.py reset-db
-flask --app run.py promote-admin --email your-email@example.com
-```
+After that, admin can promote/restrict users from `/admin/users`.
 
 ## Notes
 
-- SQLite file default location: `instance/blog.db`
-- App runs on port `5000` from `run.py`
-- This project currently has no Docker setup
+- SQLite is fine for college demos.
+- On free hosting, SQLite storage may reset on redeploy/restart.
+- For persistent production data, use managed Postgres.

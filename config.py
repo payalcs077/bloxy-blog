@@ -8,12 +8,22 @@ BASE_DIR = Path(__file__).resolve().parent
 INSTANCE_DIR = BASE_DIR / "instance"
 load_dotenv(BASE_DIR / ".env")
 
+
+def _as_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _database_uri() -> str:
     raw = os.getenv("DATABASE_URL")
     if not raw:
         db_path = INSTANCE_DIR / "blog.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         return f"sqlite:///{db_path.as_posix()}"
+
+    if raw.startswith("postgres://"):
+        raw = raw.replace("postgres://", "postgresql://", 1)
 
     # Normalize relative SQLite paths against project root so startup directory does not matter.
     if raw.startswith("sqlite:///") and not raw.startswith("sqlite:////"):
@@ -34,3 +44,6 @@ class Config:
 
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+
+    TRUST_PROXY_HEADERS = _as_bool(os.getenv("TRUST_PROXY_HEADERS"), default=True)
+    AUTO_CREATE_DB = _as_bool(os.getenv("AUTO_CREATE_DB"), default=True)
