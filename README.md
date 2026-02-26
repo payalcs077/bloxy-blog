@@ -1,30 +1,26 @@
-# Bloxy Project
+# Bloxy
 
-Bloxy is a Flask blogging platform with role-based access, Google OAuth login, SQLite storage, and a cosmic purple/pink theme.
+This is my Flask blogging website project for college.
 
-## Stack
+## What it has
+
+- Login/register with email-password
+- Google OAuth login
+- Roles: `user`, `author`, `admin`
+- Authors can create posts
+- Users/authors can like and comment
+- Admin can manage users and posts
+
+## Tech used
 
 - Flask
 - Flask-Login
 - Flask-WTF (CSRF)
 - Flask-SQLAlchemy (SQLite)
 - Authlib (Google OAuth)
-- Bootstrap 5
-- Gunicorn (deployment server)
+- Bootstrap
 
-## Features
-
-- Email/password registration + login
-- Google OAuth login
-- Roles:
-  - `user`: like + comment
-  - `author`: write/edit own posts + like/comment
-  - `admin`: manage roles/users + delete any post
-- Admin dashboards (`/admin/users`, `/admin/posts`)
-- CSRF protection
-- Health endpoint: `/healthz`
-
-## Local Run
+## Run locally
 
 ```bash
 python3 -m venv venv
@@ -37,74 +33,35 @@ python run.py
 
 Open: `http://127.0.0.1:5000`
 
-## Environment Variables
+## Required env vars
 
 ```env
-SECRET_KEY=replace-with-a-strong-secret
+SECRET_KEY=change-this
 DATABASE_URL=sqlite:///instance/blog.db
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+GOOGLE_CLIENT_ID=your-client-id
+GOOGLE_CLIENT_SECRET=your-client-secret
 AUTO_CREATE_DB=true
 TRUST_PROXY_HEADERS=true
 ```
 
-## Deploy (Recommended: Railway)
+## Railway deploy
 
-This project includes a Railway config file:
+1. Push code to GitHub.
+2. In Railway, deploy from this GitHub repo.
+3. Add env vars in Railway.
+4. Generate public domain.
 
-- `railway.toml`
+Health check:
 
-### Steps
+`https://your-domain.up.railway.app/healthz`
 
-1. Push this repo to GitHub.
-2. In Railway, click **New Project** -> **Deploy from GitHub repo**.
-3. Select this repository (`payalcs077/bloxy-blog`).
-4. Railway will read `railway.toml` and use the configured Gunicorn start command.
-5. In service variables, add:
-   - `SECRET_KEY`
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-   - `AUTO_CREATE_DB=true`
-   - `TRUST_PROXY_HEADERS=true`
-6. Go to **Settings -> Networking** and click **Generate Domain**.
+## Google OAuth redirect URIs
 
-App URL will look like:
+- Local: `http://127.0.0.1:5000/auth/authorize/google`
+- Railway: `https://your-domain.up.railway.app/auth/authorize/google`
 
-`https://<service-name>.up.railway.app`
-
-### Google OAuth callback for deployed app
-
-In Google Cloud Console OAuth client, add:
-
-`https://<service-name>.up.railway.app/auth/authorize/google`
-
-Keep local callback too:
-
-`http://127.0.0.1:5000/auth/authorize/google`
-
-## Deploy (Alternative: Render)
-
-If needed, this repo also has:
-
-- `render.yaml`
-- `Procfile`
-
-Use the same env vars and callback pattern with your Render domain.
-
-## Admin Workflow (Safer)
-
-Public signup only creates `user` or `author`.
-
-First admin bootstrap:
+## First admin setup
 
 ```bash
 flask --app run.py promote-admin --email your-email@example.com
 ```
-
-After that, admin can promote/restrict users from `/admin/users`.
-
-## Notes
-
-- SQLite is fine for college demos.
-- On free hosting, SQLite storage may reset on redeploy/restart.
-- For persistent data, switch to managed Postgres.
