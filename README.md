@@ -53,12 +53,12 @@ TRUST_PROXY_HEADERS=true
 
 Health check:
 
-`https://your-domain.up.railway.app/healthz`
+`https://bloxy.up.railway.app/healthz`
 
 ## Google OAuth redirect URIs
 
 - Local: `http://127.0.0.1:5000/auth/authorize/google`
-- Railway: `https://your-domain.up.railway.app/auth/authorize/google`
+- Railway: `https://bloxy.up.railway.app/auth/authorize/google`
 
 ## First admin setup
 
