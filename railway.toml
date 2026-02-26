@@ -2,7 +2,7 @@
 builder = "RAILPACK"
 
 [deploy]
-startCommand = "gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120"
+startCommand = "gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120"
 healthcheckPath = "/healthz"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
